@@ -73,7 +73,7 @@ type Vehicle struct {
 	Burn       int /* The fuel which gets burned this step */
 	Tensec     int /* The time the flight is running for. (in ten second steps) */
 	Fuel       int /* The fuel you have left. (kilogram) */
-	Prevheight int /* The previous height to compare with actual. (for the colored digits) */
+	PrevHeight int /* The previous height to compare with actual. (for the colored digits) */
 	Step       int /* Counts the steps passed since last output of the column names */
 
 }
@@ -88,6 +88,10 @@ const (
 	emptyfuel = "\nThere is no fuel left. You're floating around like Wheatley.\n\n"
 )
 
+const (
+	redFormatNumber = "\x1b[31m%d\x1b[0m\t\t"
+	greenFormatNumber = "\x1b[32m%d\x1b[0m\t\t"
+)
 func printHeader() {
 	fmt.Printf("\nLunar Lander - Version %s\n", version)
 	fmt.Printf("This is a computer simulation of an Apollo lunar landing capsule.\n")
@@ -107,7 +111,70 @@ func printHeader() {
 	fmt.Printf("----\n")
 }
 
+func getBurnRate() int {
+	burn := 0
+	for {
+		fmt.Scanf("%d", &burn)
+
+		if burn < 0 || burn > 200 { /* If there is a wrong entry */
+			fmt.Printf("The burn rate rate must be between 0 and 200.\nre-enter rate: ")
+			continue
+		} else {
+			break
+		}
+	}
+	return burn
+}
+
+func (vehicle *Vehicle) checkVehicleStatus() string {
+	s := ""
+	if vehicle.Height <= 0 {
+		if vehicle.Speed > 10 {
+			s = fmt.Sprintf("%s", dead)
+		}
+		if vehicle.Speed < 10 && vehicle.Speed > 3 {
+			s = fmt.Sprintf("%s", crashed)
+		}
+
+		if vehicle.Speed < 3 {
+			s = fmt.Sprintf("%s", success)
+		}
+	} else {
+		if vehicle.Height > 0 {
+			s = fmt.Sprintf("%s", emptyfuel)
+		}
+	}
+	return s
+}
+
+func (vehicle *Vehicle) adjustForBurn() {
+	vehicle.PrevHeight = vehicle.Height
+	vehicle.Speed = calculate(vehicle.Height, vehicle.Speed, vehicle.Burn, Gravity)
+	vehicle.Height = vehicle.Height - vehicle.Speed
+	vehicle.Fuel = vehicle.Fuel - vehicle.Burn
+}
+
+func (vehicle *Vehicle) getStatusLine() string {
+	s := ""
+	s = s + fmt.Sprintf("%d0\t", vehicle.Tensec)
+	s = s + fmt.Sprintf("%d\t\t", vehicle.Speed)
+	s = s + fmt.Sprintf("%d\t\t", vehicle.Fuel)
+
+	if vehicle.Height < vehicle.PrevHeight {
+		s = s + fmt.Sprintf(redFormatNumber, vehicle.Height)
+	}
+	if vehicle.Height == vehicle.PrevHeight {
+		s = s + fmt.Sprintf("%d\t\t", vehicle.Height)
+	}
+
+	if vehicle.Height > vehicle.PrevHeight {
+		s = s + fmt.Sprintf(greenFormatNumber, vehicle.Height)
+	}
+	return s
+}
+
 func RunSimulation() {
+	status := ""
 
 	/* Set initial height, time, fuel, burn, prevheight, step and speed according to difficulty. */
 	h := randomheight()
@@ -117,7 +184,7 @@ func RunSimulation() {
 		Fuel:       12000,
 		Tensec:     0,
 		Burn:       0,
-		Prevheight: h,
+		PrevHeight: h,
 		Step:       1,
 	}
 
@@ -127,32 +194,12 @@ func RunSimulation() {
 
 		vehicle.Step = windowcleaner(vehicle.Step)
 
-		fmt.Printf("%d0\t", vehicle.Tensec)
-		fmt.Printf("%d\t\t", vehicle.Speed)
-		fmt.Printf("%d\t\t", vehicle.Fuel)
+		status = vehicle.getStatusLine()
+		fmt.Printf("%s", status)
 
-		if vehicle.Height < vehicle.Prevheight {
-			fmt.Printf("\x1b[31m%d\x1b[0m\t\t", vehicle.Height)
-		}
-		if vehicle.Height == vehicle.Prevheight {
-			fmt.Printf("%d\t\t", vehicle.Height)
-		}
+		vehicle.Burn = getBurnRate()
 
-		if vehicle.Height > vehicle.Prevheight {
-			fmt.Printf("\x1b[32m%d\x1b[0m\t\t", vehicle.Height)
-		}
-
-		fmt.Scanf("%d", &vehicle.Burn)
-
-		if vehicle.Burn < 0 || vehicle.Burn > 200 { /* If there is a wrong entry */
-			fmt.Printf("The burn rate rate must be between 0 and 200.\n")
-			continue
-		}
-
-		vehicle.Prevheight = vehicle.Height
-		vehicle.Speed = calculate(vehicle.Height, vehicle.Speed, vehicle.Burn, Gravity)
-		vehicle.Height = vehicle.Height - vehicle.Speed
-		vehicle.Fuel = vehicle.Fuel - vehicle.Burn
+		vehicle.adjustForBurn()
 
 		if vehicle.Fuel <= 0 {
 			break
@@ -162,21 +209,8 @@ func RunSimulation() {
 
 	}
 
-	if vehicle.Height <= 0 {
-		if vehicle.Speed > 10 {
-			fmt.Printf("%s", dead)
-		}
-		if vehicle.Speed < 10 && vehicle.Speed > 3 {
-			fmt.Printf("%s", crashed)
-		}
+	status = vehicle.checkVehicleStatus()
+	fmt.Printf("%s", status)
 
-		if vehicle.Speed < 3 {
-			fmt.Printf("%s", success)
-		}
-	} else {
-		if vehicle.Height > 0 {
-			fmt.Printf("%s", emptyfuel)
-		}
-	}
 	return
 }
