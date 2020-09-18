@@ -27,10 +27,6 @@ import (
 	"math/rand"
 )
 
-func calculate(height, speed, burn, gravity int) int {
-	return (speed + gravity - burn)
-}
-
 func windowcleaner(step int) int {
 	if step >= 24 {
 		fmt.Printf("\nTime\t")
@@ -122,7 +118,11 @@ func getBurnRate() int {
 	return burn
 }
 
-func (vehicle *Vehicle) checkVehicleStatus() string {
+func (vehicle *Vehicle) computeDeltaV() int {
+	return (vehicle.Speed + Gravity - vehicle.Burn)
+}
+
+func (vehicle *Vehicle) checkStatus() string {
 	s := ""
 	if vehicle.Height <= 0 {
 		if vehicle.Speed > 10 {
@@ -145,13 +145,17 @@ func (vehicle *Vehicle) checkVehicleStatus() string {
 
 func (vehicle *Vehicle) adjustForBurn() {
 	vehicle.PrevHeight = vehicle.Height
-	vehicle.Speed = calculate(vehicle.Height, vehicle.Speed, vehicle.Burn, Gravity)
+	vehicle.Speed = vehicle.computeDeltaV()
 	vehicle.Height = vehicle.Height - vehicle.Speed
 	vehicle.Fuel = vehicle.Fuel - vehicle.Burn
 }
 
 func (vehicle *Vehicle) stillFlying() bool {
 	return vehicle.Height > 0
+}
+
+func (vehicle *Vehicle) outOfFuel() bool {
+	return vehicle.Fuel <= 0
 }
 
 func (vehicle *Vehicle) getStatusLine() string {
@@ -176,7 +180,7 @@ func (vehicle *Vehicle) getStatusLine() string {
 func RunSimulation() {
 	status := ""
 
-	/* Set initial height, time, fuel, burn, prevheight, step and speed according to difficulty. */
+	/* Set initial vehicle parameters */
 	h := randomheight()
 	vehicle := &Vehicle{
 		Height:     h,
@@ -201,7 +205,7 @@ func RunSimulation() {
 
 		vehicle.adjustForBurn()
 
-		if vehicle.Fuel <= 0 {
+		if vehicle.outOfFuel() {
 			break
 		}
 
@@ -209,7 +213,7 @@ func RunSimulation() {
 
 	}
 
-	status = vehicle.checkVehicleStatus()
+	status = vehicle.checkStatus()
 	fmt.Printf("%s", status)
 
 	return
