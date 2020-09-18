@@ -27,27 +27,6 @@ import (
 	"math/rand"
 )
 
-func windowcleaner(step int) int {
-	if step >= 24 {
-		fmt.Printf("\nTime\t")
-		fmt.Printf("Speed\t\t")
-		fmt.Printf("Fuel\t\t")
-		fmt.Printf("Height\t\t")
-		fmt.Printf("Burn\n")
-		fmt.Printf("----\t")
-		fmt.Printf("-----\t\t")
-		fmt.Printf("----\t\t")
-		fmt.Printf("------\t\t")
-		fmt.Printf("----\n")
-		step = 1
-	} else {
-		if step < 24 {
-			step++
-		}
-	}
-	return step
-}
-
 func randomheight() int {
 	rnd := rand.New(rand.NewSource(99))
 	r := rnd.Int()
@@ -101,11 +80,13 @@ func printHeader() {
 
 func getBurnRate() int {
 	burn := 0
+	junk := ""
 	// Do very simple input validation.
 	for {
 		_, err := fmt.Scanf("%d", &burn)
 		if err != nil {
-			fmt.Printf("Burn rate needs to be a number.\n")
+			fmt.Printf("Burn rate needs to be a number.\n>> ")
+			fmt.Scanf("%s", &junk) /* read rest of line if first parse isn't an int.*/
 			continue
 		}
 		if burn < 0 || burn > 200 { /* If there is a wrong entry */
@@ -177,6 +158,26 @@ func (vehicle *Vehicle) getStatusLine() string {
 	return s
 }
 
+func (vehicle *Vehicle) printRunningHeader() {
+	if vehicle.Step >= 24 {
+		fmt.Printf("\nTime\t")
+		fmt.Printf("Speed\t\t")
+		fmt.Printf("Fuel\t\t")
+		fmt.Printf("Height\t\t")
+		fmt.Printf("Burn\n")
+		fmt.Printf("----\t")
+		fmt.Printf("-----\t\t")
+		fmt.Printf("----\t\t")
+		fmt.Printf("------\t\t")
+		fmt.Printf("----\n")
+		vehicle.Step = 1
+	} else {
+		if vehicle.Step < 24 {
+			vehicle.Step++
+		}
+	}
+}
+
 func RunSimulation() {
 	status := ""
 
@@ -196,7 +197,7 @@ func RunSimulation() {
 
 	for vehicle.stillFlying() {
 
-		vehicle.Step = windowcleaner(vehicle.Step)
+		vehicle.printRunningHeader()
 
 		status = vehicle.getStatusLine()
 		fmt.Printf("%s", status)
