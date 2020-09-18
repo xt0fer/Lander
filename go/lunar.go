@@ -1,5 +1,5 @@
 /*
- * main.go
+ * Package lunar
  *
  * Copyright 2020 ZipCodeWilmington Kris Younger
  *
@@ -28,7 +28,8 @@ import (
 )
 
 func randomheight() int {
-	rnd := rand.New(rand.NewSource(99))
+	rnd := rand.New(rand.NewSource(99)) // this is not random.
+	//rnd := rand.New(rand.NewSource(time.Now().UnixNano())) // would be random.
 	r := rnd.Int()
 	return (r%15000 + 4000)
 }
