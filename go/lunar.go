@@ -31,15 +31,6 @@ func calculate(height, speed, burn, gravity int) int {
 	return (speed + gravity - burn)
 }
 
-func help() {
-	fmt.Printf("Lunar Lander version 1.1\n")
-	fmt.Printf("Made by Kristofer\n\n")
-	fmt.Printf("The following arguments are possible (only one):\n")
-	fmt.Printf("-d [1/2/3]\tDefine difficulty. 1 is easy 3 is hard.\n")
-	fmt.Printf("--info\tShow different intro.")
-	fmt.Printf("--help\tPrint this help and exit.\n")
-}
-
 func windowcleaner(step int) int {
 	if step >= 24 {
 		fmt.Printf("\nTime\t")
@@ -89,9 +80,10 @@ const (
 )
 
 const (
-	redFormatNumber = "\x1b[31m%d\x1b[0m\t\t"
+	redFormatNumber   = "\x1b[31m%d\x1b[0m\t\t"
 	greenFormatNumber = "\x1b[32m%d\x1b[0m\t\t"
 )
+
 func printHeader() {
 	fmt.Printf("\nLunar Lander - Version %s\n", version)
 	fmt.Printf("This is a computer simulation of an Apollo lunar landing capsule.\n")
@@ -113,11 +105,15 @@ func printHeader() {
 
 func getBurnRate() int {
 	burn := 0
+	// Do very simple input validation.
 	for {
-		fmt.Scanf("%d", &burn)
-
+		_, err := fmt.Scanf("%d", &burn)
+		if err != nil {
+			fmt.Printf("Burn rate needs to be a number.\n")
+			continue
+		}
 		if burn < 0 || burn > 200 { /* If there is a wrong entry */
-			fmt.Printf("The burn rate rate must be between 0 and 200.\nre-enter rate: ")
+			fmt.Printf("The burn rate rate must be between 0 and 200.\n> ")
 			continue
 		} else {
 			break
@@ -152,6 +148,10 @@ func (vehicle *Vehicle) adjustForBurn() {
 	vehicle.Speed = calculate(vehicle.Height, vehicle.Speed, vehicle.Burn, Gravity)
 	vehicle.Height = vehicle.Height - vehicle.Speed
 	vehicle.Fuel = vehicle.Fuel - vehicle.Burn
+}
+
+func (vehicle *Vehicle) stillFlying() bool {
+	return vehicle.Height > 0
 }
 
 func (vehicle *Vehicle) getStatusLine() string {
@@ -190,7 +190,7 @@ func RunSimulation() {
 
 	printHeader()
 
-	for vehicle.Height > 0 {
+	for vehicle.stillFlying() {
 
 		vehicle.Step = windowcleaner(vehicle.Step)
 
