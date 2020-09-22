@@ -48,7 +48,7 @@ type Vehicle struct {
 const Gravity = 100 /* The rate in which the spaceship descents in free fall (in ten seconds) */
 
 const (
-	version   = "1.1" /* The Version of the program */
+	version   = "1.2" /* The Version of the program */
 	dead      = "\nThere were no survivors.\n\n"
 	crashed   = "\nThe Spaceship crashed. Good luck getting back home.\n\n"
 	success   = "\nYou made it! Good job!\n\n"
